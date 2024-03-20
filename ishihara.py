@@ -3,16 +3,9 @@ import random
 import sys
 
 from PIL import Image, ImageDraw, ImageFont
+import numpy as np
 
-try:
-    from scipy.spatial import cKDTree as KDTree
-    import numpy as np
-    IMPORTED_SCIPY = True
-except ImportError:
-    IMPORTED_SCIPY = False
-
-BACKGROUND = (255, 255, 255)
-TOTAL_CIRCLES = 1500
+BACKGROUND = 'white' #(255, 255, 255)
 
 color = lambda c: ((c >> 16) & 255, (c >> 8) & 255, c & 255)
 
@@ -39,7 +32,8 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
 
 def overlaps_motive(image, circle):
     x, y, r = circle
-    return image.getpixel((x, y)) > 127
+    return np.mean(image.crop((x-r/2, y-r/2, x+r/2, y+r/2))) > 127
+    # return image.getpixel((x, y)) > 127
 
 
 def circle_intersection(circle1, circle2):
@@ -58,34 +52,31 @@ def circle_draw(draw_image, circle, image):
                        outline=fill_color)
 
 
-def main():
-    width, height = 1024, 1024
-    text = '6'
+def main(text='ЛОХ\nЭТО\nСУДЬБА', width=1024, height=1024):
+    text = text.upper()
 
     image1 = Image.new('L', (width, height), 'white')
     writer = ImageDraw.Draw(image1)
 
     fontsize = 1
-    font = ImageFont.truetype('arial.ttf', size=fontsize)
-    while font.getlength(text) < min(width, height):
+    font = ImageFont.truetype('/Library/Fonts/Arial.ttf', size=fontsize)
+    while writer.textbbox((0, 0), text, font=font)[2] < 0.9 * width and writer.textbbox((0, 0), text, font=font)[3] < 0.9 * height:
+    # while font.getlength(text) < min(width, height):
         fontsize += 1
-        font = ImageFont.truetype('arial.ttf', size=fontsize)
+        font = ImageFont.truetype('/Library/Fonts/Arial.ttf', size=fontsize)
 
     _, _, w, h = writer.textbbox((0, 0), text, font=font)
 
-    writer.text(((width-w)/2, (height-h)/2), text, font=font, fill='black')
+    writer.text(((width-w)/2, (height-h)/2), text, font=font, fill='black', align='center')
 
 
     image2 = Image.new('RGB', (width, height), BACKGROUND)
     draw_image = ImageDraw.Draw(image2)
 
-    min_diameter = min(width, height) / 150
+    min_diameter = min(width, height) / 120
     max_diameter = min(width, height) / 60
 
-    circle = generate_circle(width, height, min_diameter, max_diameter)
-    circles = [circle]
-
-    circle_draw(draw_image, circle, image1)
+    circles = []
     tries = 0
     try:
         while tries < 300:
@@ -105,4 +96,4 @@ def main():
     #image1.show()
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])

@@ -1,5 +1,7 @@
-# Ishihara Color Blindness Test Generator
+# Ishihara Color Blindness Image Test Generator
 
-    python ishihara.py
+    python ishihara.py simple
 
-Requirements: PIL.
+Requirements: PIL, numpy.
+
+![res.png](res.png)
