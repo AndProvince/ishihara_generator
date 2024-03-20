@@ -4,4 +4,4 @@
 
 Requirements: PIL, numpy.
 
-![res.png](res.png)
+![result](https://i.ibb.co.com/dtZV5bm/res.png)
