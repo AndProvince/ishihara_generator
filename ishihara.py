@@ -2,7 +2,7 @@ import math
 import random
 import sys
 
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageFont
 
 try:
     from scipy.spatial import cKDTree as KDTree
@@ -30,8 +30,8 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
                                max_diameter * 0.8 + min_diameter * 0.2) / 2
 
     angle = random.uniform(0, math.pi * 2)
-    distance_from_center = random.uniform(0, image_width * 0.48 - radius)
-    x = image_width  * 0.5 + math.cos(angle) * distance_from_center
+    distance_from_center = random.uniform(0, min(image_width, image_height) * 0.5 - radius)
+    x = image_width * 0.5 + math.cos(angle) * distance_from_center
     y = image_height * 0.5 + math.sin(angle) * distance_from_center
 
     return x, y, radius
@@ -39,14 +39,7 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
 
 def overlaps_motive(image, circle):
     x, y, r = circle
-    points_x = [x, x, x, x-r, x+r, x-r*0.93, x-r*0.93, x+r*0.93, x+r*0.93]
-    points_y = [y, y-r, y+r, y, y, y+r*0.93, y-r*0.93, y+r*0.93, y-r*0.93]
-
-    for xy in zip(points_x, points_y):
-        if image.getpixel(xy)[:3] != BACKGROUND:
-            return True
-
-    return False
+    return image.getpixel((x, y)) > 127
 
 
 def circle_intersection(circle1, circle2):
@@ -55,7 +48,7 @@ def circle_intersection(circle1, circle2):
     return (x2 - x1)**2 + (y2 - y1)**2 < (r2 + r1)**2
 
 
-def circle_draw(draw_image, image, circle):
+def circle_draw(draw_image, circle, image):
     fill_colors = COLORS_ON if overlaps_motive(image, circle) else COLORS_OFF
     fill_color = random.choice(fill_colors)
 
@@ -66,47 +59,50 @@ def circle_draw(draw_image, image, circle):
 
 
 def main():
-    image = Image.open(sys.argv[1]).convert('RGB')
-    image2 = Image.new('RGB', image.size, BACKGROUND)
+    width, height = 1024, 1024
+    text = '6'
+
+    image1 = Image.new('L', (width, height), 'white')
+    writer = ImageDraw.Draw(image1)
+
+    fontsize = 1
+    font = ImageFont.truetype('arial.ttf', size=fontsize)
+    while font.getlength(text) < min(width, height):
+        fontsize += 1
+        font = ImageFont.truetype('arial.ttf', size=fontsize)
+
+    _, _, w, h = writer.textbbox((0, 0), text, font=font)
+
+    writer.text(((width-w)/2, (height-h)/2), text, font=font, fill='black')
+
+
+    image2 = Image.new('RGB', (width, height), BACKGROUND)
     draw_image = ImageDraw.Draw(image2)
 
-    width, height = image.size
-
-    min_diameter = (width + height) / 200
-    max_diameter = (width + height) / 75
+    min_diameter = min(width, height) / 150
+    max_diameter = min(width, height) / 60
 
     circle = generate_circle(width, height, min_diameter, max_diameter)
     circles = [circle]
 
-    circle_draw(draw_image, image, circle)
-
+    circle_draw(draw_image, circle, image1)
+    tries = 0
     try:
-        for i in range(TOTAL_CIRCLES):
-            tries = 0
-            if IMPORTED_SCIPY:
-                kdtree = KDTree([(x, y) for (x, y, _) in circles])
-                while True:
-                    circle = generate_circle(width, height, min_diameter, max_diameter)
-                    elements, indexes = kdtree.query([(circle[0], circle[1])], k=12)
-                    for element, index in zip(elements[0], indexes[0]):
-                        if not np.isinf(element) and circle_intersection(circle, circles[index]):
-                            break
-                    else:
-                        break
-                    tries += 1
-            else:
-                while any(circle_intersection(circle, circle2) for circle2 in circles):
-                    tries += 1
-                    circle = generate_circle(width, height, min_diameter, max_diameter)
+        while tries < 300:
+            tries += 1
+            circle = generate_circle(width, height, min_diameter, max_diameter)
+            if not any(circle_intersection(circle, circle2) for circle2 in circles):
+                circles.append(circle)
+                circle_draw(draw_image, circle, image1)
 
-            print('{}/{} {}'.format(i, TOTAL_CIRCLES, tries))
-
-            circles.append(circle)
-            circle_draw(draw_image, image, circle)
+                print('Total circles {}.  {}'.format(len(circles), tries))
+                tries = 0
     except (KeyboardInterrupt, SystemExit):
         pass
 
+    image2.save('res.png')
     image2.show()
+    #image1.show()
 
 if __name__ == '__main__':
     main()
