@@ -29,7 +29,6 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
 
     return x, y, radius
 
-
 def overlaps_motive(image, circle):
     x, y, r = circle
     return np.mean(image.crop((x-r, y-r, x+r, y+r))) > 127
@@ -69,12 +68,11 @@ def main(text='ЛОХ\nЭТО\nСУДЬБА', width=1024, height=1024):
 
     writer.text(((width-w)/2, (height-h)/2), text, font=font, fill='black', align='center')
 
-
     image2 = Image.new('RGB', (width, height), BACKGROUND)
     draw_image = ImageDraw.Draw(image2)
 
-    min_diameter = min(width, height) / 120
-    max_diameter = min(width, height) / 60
+    min_diameter = min(width, height) / (50+10*len(text))
+    max_diameter = min(width, height) / (50+5*len(text))
 
     circles = []
     tries = 0
