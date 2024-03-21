@@ -32,7 +32,7 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
 
 def overlaps_motive(image, circle):
     x, y, r = circle
-    return np.mean(image.crop((x-r/2, y-r/2, x+r/2, y+r/2))) > 127
+    return np.mean(image.crop((x-r, y-r, x+r, y+r))) > 127
     # return image.getpixel((x, y)) > 127
 
 
