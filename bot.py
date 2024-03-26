@@ -7,9 +7,13 @@ import datetime
 import telebot
 
 from ishihara import create_image
-from background import keep_alive  # Flask server
+from dotenv import load_dotenv
 
-BOT_TOKEN = os.environ['TG_BOT_TOKEN']
+load_dotenv('settings.env')
+
+font_file = 'Rubik.ttf'
+
+BOT_TOKEN = os.getenv('TG_BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
 
 
@@ -27,7 +31,8 @@ def bot_message(message):
 
 @bot.message_handler(content_types=['text'])
 def photo(message):
-    bot.reply_to(message, 'Ok, let\'s try. Please wait a moment for the conversion "{}"'.format(message.text))
+    bot.reply_to(message, 'Ok, let\'s try.\n'
+                          'Please wait a moment for the conversion "{}"'.format(message.text))
 
     timestamp = str(datetime.datetime.now())
 
@@ -35,5 +40,4 @@ def photo(message):
 
 
 if __name__ == '__main__':
-    keep_alive()
     bot.infinity_polling()
