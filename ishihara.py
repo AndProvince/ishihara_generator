@@ -9,10 +9,13 @@ BACKGROUND = (255, 255, 255)
 
 FONT = 'Rubik.ttf'
 
-color = lambda c: ImageColor.getcolor(c, 'RGB') #((c >> 16) & 255, (c >> 8) & 255, c & 255)
+
+def color(c):
+    return ImageColor.getcolor(c, 'RGB')
+
 
 # Dict with tuples items formatted - ([#COLORS_ON], [#COLORS_OFF])
-COLORS = {}
+COLORS = dict()
 
 COLORS['Yellow|Green'] = ([color('#F9BB82'), color('#EBA170'), color('#FCCD84')],
                           [color('#9CA594'), color('#ACB4A5'), color('#BBB964'),
@@ -29,9 +32,10 @@ COLORS['Pink|Black'] = ([color('#f79087'), color('#f26969'), color('#d8859d'),
                         )
 
 COLORS['Green|Yellow+Red'] = ([color('#b6b87c'), color('#e3da73'), color('#b0ab60')],
-             [color('#ef845a'), color('#ffc68c'), color('#ef845a'),
-              color('#fff36b'), color('#ffbd52')]
-             )
+                              [color('#ef845a'), color('#ffc68c'), color('#ef845a'),
+                               color('#fff36b'), color('#ffbd52')]
+                              )
+
 
 def generate_circle(image_width, image_height, min_diameter, max_diameter):
     radius = random.triangular(min_diameter, max_diameter,
@@ -43,6 +47,7 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
     y = image_height * 0.5 + math.sin(angle) * distance_from_center
 
     return x, y, radius
+
 
 def overlaps_motive(image, circle):
     x, y, r = circle
@@ -65,25 +70,26 @@ def circle_draw(draw_image, circle, image, schema):
                        outline=fill_color)
 
 
-def main(text='only love is real', width=1024, height=1024):
+def create_image(text='only love is real', width=1024, height=1024, file='res'):
     text = '\n'.join(text.split())
     text = text.upper()
 
     image_text = Image.new('L', (width, height), 'white')
     writer = ImageDraw.Draw(image_text)
 
-    fontsize = 1
-    font = ImageFont.truetype(FONT, size=fontsize)
-    while writer.textbbox((0, 0), text, font=font)[2] < 0.7 * width and writer.textbbox((0, 0), text, font=font)[3] < 0.7 * height:
-        fontsize += 1
-        font = ImageFont.truetype(FONT, size=fontsize)
+    font_size = 1
+    font = ImageFont.truetype(FONT, size=font_size)
+    while (writer.textbbox((0, 0), text, font=font)[2] < 0.7 * width and
+           writer.textbbox((0, 0), text, font=font)[3] < 0.7 * height):
+        font_size += 1
+        font = ImageFont.truetype(FONT, size=font_size)
 
     _, _, w, h = writer.textbbox((0, 0), text, font=font)
 
     writer.text(((width-w)/2, (height-h)/2), text, font=font, fill='black', align='center')
 
-    image2 = Image.new('RGB', (width, height), BACKGROUND)
-    draw_image = ImageDraw.Draw(image2)
+    image = Image.new('RGB', (width, height), BACKGROUND)
+    draw_image = ImageDraw.Draw(image)
 
     min_diameter = min(width, height) / (50+10*len(text))
     max_diameter = min(width, height) / (50+5*len(text))
@@ -104,8 +110,10 @@ def main(text='only love is real', width=1024, height=1024):
     except (KeyboardInterrupt, SystemExit):
         pass
 
-    image2.save('res.png')
-    image2.show()
+    #image.save(file)
+    #image2.show()
+    return image
+
 
 if __name__ == '__main__':
-    main(sys.argv[1])
+    create_image('ты пидор')
