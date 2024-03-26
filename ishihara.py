@@ -2,21 +2,36 @@ import math
 import random
 import sys
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageColor
 import numpy as np
 
-BACKGROUND = 'white' #(255, 255, 255)
+BACKGROUND = (255, 255, 255)
 
-color = lambda c: ((c >> 16) & 255, (c >> 8) & 255, c & 255)
+FONT = 'Rubik.ttf'
 
-COLORS_ON = [
-    color(0xF9BB82), color(0xEBA170), color(0xFCCD84)
-]
-COLORS_OFF = [
-    color(0x9CA594), color(0xACB4A5), color(0xBBB964),
-    color(0xD7DAAA), color(0xE5D57D), color(0xD1D6AF)
-]
+color = lambda c: ImageColor.getcolor(c, 'RGB') #((c >> 16) & 255, (c >> 8) & 255, c & 255)
 
+# Dict with tuples items formatted - ([#COLORS_ON], [#COLORS_OFF])
+COLORS = {}
+
+COLORS['Yellow|Green'] = ([color('#F9BB82'), color('#EBA170'), color('#FCCD84')],
+                          [color('#9CA594'), color('#ACB4A5'), color('#BBB964'),
+                           color('#D7DAAA'), color('#E5D57D'), color('#D1D6AF')]
+                          )
+
+COLORS['Green|Red'] = ([color('#b6b87c'), color('#e3da73'), color('#b0ab60')],
+                       [color('#ef845a'), color('#ffc68c'), color('#ef845a')]
+                       )
+
+COLORS['Pink|Black'] = ([color('#f79087'), color('#f26969'), color('#d8859d'),
+                         color('#f79087')],
+                        [color('#5a4e46'), color('#7b6b63'), color('#9c9c84')]
+                        )
+
+COLORS['Green|Yellow+Red'] = ([color('#b6b87c'), color('#e3da73'), color('#b0ab60')],
+             [color('#ef845a'), color('#ffc68c'), color('#ef845a'),
+              color('#fff36b'), color('#ffbd52')]
+             )
 
 def generate_circle(image_width, image_height, min_diameter, max_diameter):
     radius = random.triangular(min_diameter, max_diameter,
@@ -32,7 +47,6 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
 def overlaps_motive(image, circle):
     x, y, r = circle
     return np.mean(image.crop((x-r, y-r, x+r, y+r))) > 127
-    # return image.getpixel((x, y)) > 127
 
 
 def circle_intersection(circle1, circle2):
@@ -41,8 +55,8 @@ def circle_intersection(circle1, circle2):
     return (x2 - x1)**2 + (y2 - y1)**2 < (r2 + r1)**2
 
 
-def circle_draw(draw_image, circle, image):
-    fill_colors = COLORS_ON if overlaps_motive(image, circle) else COLORS_OFF
+def circle_draw(draw_image, circle, image, schema):
+    fill_colors = COLORS[schema][0] if overlaps_motive(image, circle) else COLORS[schema][1]
     fill_color = random.choice(fill_colors)
 
     x, y, r = circle
@@ -51,18 +65,18 @@ def circle_draw(draw_image, circle, image):
                        outline=fill_color)
 
 
-def main(text='ЛОХ\nЭТО\nСУДЬБА', width=1024, height=1024):
+def main(text='only love is real', width=1024, height=1024):
+    text = '\n'.join(text.split())
     text = text.upper()
 
-    image1 = Image.new('L', (width, height), 'white')
-    writer = ImageDraw.Draw(image1)
+    image_text = Image.new('L', (width, height), 'white')
+    writer = ImageDraw.Draw(image_text)
 
     fontsize = 1
-    font = ImageFont.truetype('/Library/Fonts/Arial.ttf', size=fontsize)
-    while writer.textbbox((0, 0), text, font=font)[2] < 0.9 * width and writer.textbbox((0, 0), text, font=font)[3] < 0.9 * height:
-    # while font.getlength(text) < min(width, height):
+    font = ImageFont.truetype(FONT, size=fontsize)
+    while writer.textbbox((0, 0), text, font=font)[2] < 0.7 * width and writer.textbbox((0, 0), text, font=font)[3] < 0.7 * height:
         fontsize += 1
-        font = ImageFont.truetype('/Library/Fonts/Arial.ttf', size=fontsize)
+        font = ImageFont.truetype(FONT, size=fontsize)
 
     _, _, w, h = writer.textbbox((0, 0), text, font=font)
 
@@ -74,6 +88,7 @@ def main(text='ЛОХ\nЭТО\nСУДЬБА', width=1024, height=1024):
     min_diameter = min(width, height) / (50+10*len(text))
     max_diameter = min(width, height) / (50+5*len(text))
 
+    color_schema = random.choice(list(COLORS.keys()))
     circles = []
     tries = 0
     try:
@@ -82,7 +97,7 @@ def main(text='ЛОХ\nЭТО\nСУДЬБА', width=1024, height=1024):
             circle = generate_circle(width, height, min_diameter, max_diameter)
             if not any(circle_intersection(circle, circle2) for circle2 in circles):
                 circles.append(circle)
-                circle_draw(draw_image, circle, image1)
+                circle_draw(draw_image, circle, image_text, color_schema)
 
                 print('Total circles {}.  {}'.format(len(circles), tries))
                 tries = 0
@@ -91,7 +106,6 @@ def main(text='ЛОХ\nЭТО\nСУДЬБА', width=1024, height=1024):
 
     image2.save('res.png')
     image2.show()
-    #image1.show()
 
 if __name__ == '__main__':
     main(sys.argv[1])
