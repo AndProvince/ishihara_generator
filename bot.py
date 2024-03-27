@@ -3,15 +3,12 @@
 # 4ponomarev@gmail.com
 
 import os
-import datetime
 import telebot
 
 from ishihara import create_image
 from dotenv import load_dotenv
 
 load_dotenv('settings.env')
-
-font_file = 'Rubik.ttf'
 
 BOT_TOKEN = os.getenv('TG_BOT_TOKEN')
 bot = telebot.TeleBot(BOT_TOKEN)
@@ -33,8 +30,6 @@ def bot_message(message):
 def photo(message):
     bot.reply_to(message, 'Ok, let\'s try.\n'
                           'Please wait a moment for the conversion "{}"'.format(message.text))
-
-    #timestamp = str(datetime.datetime.now())
 
     bot.send_photo(message.chat.id, create_image(text=message.text))
 

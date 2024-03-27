@@ -47,6 +47,11 @@ def generate_circle(image_width, image_height, min_diameter, max_diameter):
     return x, y, radius
 
 
+def circle_avaible(circle, width, height, radius):
+    x, y, r = circle
+    return (width/2 - x)**2 + (height/2 - y)**2 < radius**2
+
+
 def overlaps_motive(image, circle):
     x, y, r = circle
     return np.mean(image.crop((x-r, y-r, x+r, y+r))) > 127
@@ -77,8 +82,8 @@ def create_image(text='only love is real', width=1024, height=1024):
 
     font_size = 1
     font = ImageFont.truetype(FONT, size=font_size)
-    while (writer.textbbox((0, 0), text, font=font)[2] < 0.8 * width and
-           writer.textbbox((0, 0), text, font=font)[3] < 0.8 * height):
+    while (writer.textbbox((0, 0), text, font=font)[2] < 0.9 * width and
+           writer.textbbox((0, 0), text, font=font)[3] < 0.9 * height):
         font_size += 1
         font = ImageFont.truetype(FONT, size=font_size)
 
@@ -89,34 +94,51 @@ def create_image(text='only love is real', width=1024, height=1024):
     image = Image.new('RGB', (width, height), 'white')
     draw_image = ImageDraw.Draw(image)
 
-    min_diameter = min(width, height) / min(50+10*len(text), 200)
-    max_diameter = min(width, height) / min(50+5*len(text), 125)
+    min_radius = min(width, height) / min(100 + 15 * len(text), 250)
+    max_radius = min(width, height) / min(100 + 10 * len(text), 200)
 
     color_schema = random.choice(list(COLORS.keys()))
     circles = []
-    tries = 0
     try:
         start = datetime.datetime.now()
-        while tries < 300:
-            tries += 1
-            circle = generate_circle(width, height, min_diameter, max_diameter)
-            if not any(circle_intersection(circle, circle2) for circle2 in circles):
-                circles.append(circle)
-                circle_draw(draw_image, circle, image_text, color_schema)
+        big_radius = min(width, height) / 2
+        x = min_radius
+        new_line = []
+        while x < width:
+            y = min_radius
+            last_line = new_line.copy()
+            new_line = []
+            while y < height:
+                radius = random.triangular(min_radius, max_radius,
+                                           max_radius * 0.8 + min_radius * 0.2)
+                circle = (x + random.triangular(-0.1 * min_radius, 0.1 * min_radius), y, radius)
 
-                print('Total circles {}.  {}'.format(len(circles), tries))
-                tries = 0
+                if (circle_avaible(circle, width, height, big_radius) and
+                        not any(circle_intersection(circle, circle2) for circle2 in last_line) and
+                        not any(circle_intersection(circle, circle2) for circle2 in new_line)):
+                    new_line.append(circle)
+                    circles.append(circle)
+                    circle_draw(draw_image, circle, image_text, color_schema)
 
-            if (datetime.datetime.now() - start).total_seconds() > 300:
-                print('Timer call')
-                break
+                    print('Total circles {}'.format(len(circles)))
+
+                y += random.triangular(min_radius, max_radius,
+                                       max_radius * 0.8 + min_radius * 0.2)
+
+                if (datetime.datetime.now() - start).total_seconds() > 300:
+                    print('Timer call')
+                    break
+
+            x += random.triangular(min_radius, max_radius,
+                                   max_radius * 0.8 + min_radius * 0.2)
+
     except (KeyboardInterrupt, SystemExit):
         pass
 
-    #image.save('res.png')
+    image.save('res.png')
     image.show()
     return image
 
 
 if __name__ == '__main__':
-    create_image()
+    create_image('nothing')
