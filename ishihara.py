@@ -1,13 +1,11 @@
 import math
 import random
-import sys
-
+import datetime
 from PIL import Image, ImageDraw, ImageFont, ImageColor
 import numpy as np
 
-BACKGROUND = (255, 255, 255)
 
-FONT = 'Rubik.ttf'
+FONT = 'Rubik-Bold.ttf'
 
 
 def color(c):
@@ -70,7 +68,7 @@ def circle_draw(draw_image, circle, image, schema):
                        outline=fill_color)
 
 
-def create_image(text='only love is real', width=1024, height=1024, file='res'):
+def create_image(text='only love is real', width=1024, height=1024):
     text = '\n'.join(text.split())
     text = text.upper()
 
@@ -79,8 +77,8 @@ def create_image(text='only love is real', width=1024, height=1024, file='res'):
 
     font_size = 1
     font = ImageFont.truetype(FONT, size=font_size)
-    while (writer.textbbox((0, 0), text, font=font)[2] < 0.7 * width and
-           writer.textbbox((0, 0), text, font=font)[3] < 0.7 * height):
+    while (writer.textbbox((0, 0), text, font=font)[2] < 0.8 * width and
+           writer.textbbox((0, 0), text, font=font)[3] < 0.8 * height):
         font_size += 1
         font = ImageFont.truetype(FONT, size=font_size)
 
@@ -88,16 +86,17 @@ def create_image(text='only love is real', width=1024, height=1024, file='res'):
 
     writer.text(((width-w)/2, (height-h)/2), text, font=font, fill='black', align='center')
 
-    image = Image.new('RGB', (width, height), BACKGROUND)
+    image = Image.new('RGB', (width, height), 'white')
     draw_image = ImageDraw.Draw(image)
 
-    min_diameter = min(width, height) / (50+10*len(text))
-    max_diameter = min(width, height) / (50+5*len(text))
+    min_diameter = min(width, height) / min(50+10*len(text), 200)
+    max_diameter = min(width, height) / min(50+5*len(text), 125)
 
     color_schema = random.choice(list(COLORS.keys()))
     circles = []
     tries = 0
     try:
+        start = datetime.datetime.now()
         while tries < 300:
             tries += 1
             circle = generate_circle(width, height, min_diameter, max_diameter)
@@ -107,13 +106,17 @@ def create_image(text='only love is real', width=1024, height=1024, file='res'):
 
                 print('Total circles {}.  {}'.format(len(circles), tries))
                 tries = 0
+
+            if (datetime.datetime.now() - start).total_seconds() > 300:
+                print('Timer call')
+                break
     except (KeyboardInterrupt, SystemExit):
         pass
 
-    #image.save(file)
-    #image2.show()
+    #image.save('res.png')
+    image.show()
     return image
 
 
 if __name__ == '__main__':
-    create_image('ты пидор')
+    create_image()

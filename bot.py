@@ -34,9 +34,9 @@ def photo(message):
     bot.reply_to(message, 'Ok, let\'s try.\n'
                           'Please wait a moment for the conversion "{}"'.format(message.text))
 
-    timestamp = str(datetime.datetime.now())
+    #timestamp = str(datetime.datetime.now())
 
-    bot.send_photo(message.chat.id, create_image(text=message.text, file=timestamp))
+    bot.send_photo(message.chat.id, create_image(text=message.text))
 
 
 if __name__ == '__main__':
