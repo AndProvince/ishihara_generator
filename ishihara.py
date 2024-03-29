@@ -102,16 +102,16 @@ def create_image(text='only love is real', width=1024, height=1024):
     try:
         start = datetime.datetime.now()
         big_radius = min(width, height) / 2
-        x = min_radius
+        x = max_radius
         new_line = []
         while x < width:
-            y = min_radius
+            y = max_radius
             last_line = new_line.copy()
             new_line = []
             while y < height:
                 radius = random.triangular(min_radius, max_radius,
                                            max_radius * 0.8 + min_radius * 0.2)
-                circle = (x + random.triangular(-0.1 * min_radius, 0.1 * min_radius), y, radius)
+                circle = (x + random.triangular(-max_radius, max_radius), y, radius)
 
                 if (circle_avaible(circle, width, height, big_radius) and
                         not any(circle_intersection(circle, circle2) for circle2 in last_line) and
@@ -135,10 +135,10 @@ def create_image(text='only love is real', width=1024, height=1024):
     except (KeyboardInterrupt, SystemExit):
         pass
 
-    image.save('res.png')
+    #image.save('res.png')
     image.show()
     return image
 
 
 if __name__ == '__main__':
-    create_image('nothing')
+    create_image('let\'s dance')
